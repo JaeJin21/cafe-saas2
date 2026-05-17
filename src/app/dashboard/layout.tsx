@@ -18,7 +18,7 @@ export default async function DashboardLayout({
       .eq('user_id', user.id)
       .order('sort_order', { ascending: true })
       .order('created_at', { ascending: false })
-    cafes = (data as typeof cafes) ?? []
+    cafes = (data as unknown as typeof cafes) ?? []
   }
 
   return (
