@@ -9,11 +9,23 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
+const BUSINESS_TYPES = [
+  { value: 'shopping', label: '쇼핑몰/의류', icon: '🛍️' },
+  { value: 'food', label: '식품/식당', icon: '🍽️' },
+  { value: 'beauty', label: '뷰티/헬스', icon: '💄' },
+  { value: 'education', label: '교육/학원', icon: '📚' },
+  { value: 'realestate', label: '부동산/인테리어', icon: '🏠' },
+  { value: 'travel', label: '여행/숙박', icon: '✈️' },
+  { value: 'it', label: 'IT/서비스', icon: '💻' },
+  { value: 'other', label: '기타', icon: '📦' },
+]
+
 export default function SignupPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
+  const [businessType, setBusinessType] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
@@ -30,10 +42,18 @@ export default function SignupPage() {
       setError('비밀번호는 6자 이상이어야 합니다.')
       return
     }
+    if (!businessType) {
+      setError('업종을 선택해주세요.')
+      return
+    }
 
     setLoading(true)
     const supabase = createClient()
-    const { error } = await supabase.auth.signUp({ email, password })
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { business_type: businessType } },
+    })
 
     if (error) {
       setError(error.message === 'User already registered'
@@ -132,6 +152,27 @@ export default function SignupPage() {
                   required
                   autoComplete="new-password"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">업종</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {BUSINESS_TYPES.map((type) => (
+                    <button
+                      key={type.value}
+                      type="button"
+                      onClick={() => setBusinessType(type.value)}
+                      className={`flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm text-left transition-colors ${
+                        businessType === type.value
+                          ? 'border-primary bg-primary/5 font-medium text-primary'
+                          : 'border-border hover:border-muted-foreground/40 hover:bg-muted/50'
+                      }`}
+                    >
+                      <span className="text-base">{type.icon}</span>
+                      <span>{type.label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {error && (

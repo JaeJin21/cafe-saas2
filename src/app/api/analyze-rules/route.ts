@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
 import Groq from 'groq-sdk'
 
 export async function POST(req: NextRequest) {
   try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 })
+    }
+
     const { url, rules_text } = await req.json()
     if (!rules_text?.trim()) {
       return NextResponse.json({ error: '규칙 텍스트가 필요합니다.' }, { status: 400 })
@@ -55,6 +62,6 @@ ${truncated}
     return NextResponse.json(data)
   } catch (err: any) {
     console.error('analyze-rules error:', err.message)
-    return NextResponse.json({ error: err.message || '분석에 실패했습니다.' }, { status: 500 })
+    return NextResponse.json({ error: '분석에 실패했습니다.' }, { status: 500 })
   }
 }

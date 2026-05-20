@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Loader2, X, ExternalLink, RotateCcw } from 'lucide-react'
+import { Loader2, X, ExternalLink, RotateCcw, CheckCircle2, XCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -63,9 +63,15 @@ export default function CafeDetailPage() {
   const [userMap, setUserMap] = useState<UserCafeMap | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // ① AI 분석
-  const [rulesText, setRulesText] = useState('')
-  const [analyzing, setAnalyzing] = useState(false)
+  // ① AI 홍보글 검토
+  const [postText, setPostText] = useState('')
+  const [reviewing, setReviewing] = useState(false)
+  const [reviewResult, setReviewResult] = useState<{
+    ok: boolean
+    issues: string[]
+    suggestion: string | null
+    summary: string
+  } | null>(null)
 
   // ② 내 규칙
   const [rules, setRules] = useState<CafeRules | null>(null)
@@ -114,38 +120,24 @@ export default function CafeDetailPage() {
     })
   }, [params.id])
 
-  // AI 분석 → 내 규칙 자동 저장
-  async function handleAnalyze() {
-    if (!rulesText.trim()) { toast.error('공지/규칙 텍스트를 입력해주세요.'); return }
-    setAnalyzing(true)
+  // AI 홍보글 검토
+  async function handleReview() {
+    if (!postText.trim()) { toast.error('홍보글 내용을 입력해주세요.'); return }
+    setReviewing(true)
+    setReviewResult(null)
     try {
-      const res = await fetch('/api/analyze-rules', {
+      const res = await fetch('/api/review-post', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: cafe?.url, rules_text: rulesText }),
+        body: JSON.stringify({ post_text: postText, rules }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
-
-      const newRules = rules ? { ...rules, ...data, name: userMap?.alias || cafe?.name || rules.name } : null
-      setRules(newRules)
-
-      // 분석 결과 자동 저장
-      if (newRules) {
-        const { error } = await supabase
-          .from('user_cafe_map')
-          .update({ rules_override: newRules, alias: newRules.name })
-          .eq('cafe_id', params.id)
-        if (error) throw error
-        setUserMap(prev => prev ? { ...prev, rules_override: newRules, alias: newRules.name } : prev)
-        router.refresh()
-      }
-
-      toast.success('AI 분석 완료! 규칙이 자동 저장되었습니다.')
+      setReviewResult(data)
     } catch (e: any) {
-      toast.error(e.message || 'AI 분석에 실패했습니다.')
+      toast.error(e.message || '검토에 실패했습니다.')
     } finally {
-      setAnalyzing(false)
+      setReviewing(false)
     }
   }
 
@@ -392,37 +384,61 @@ export default function CafeDetailPage() {
         </Card>
       )}
 
-      {/* ① AI 규칙 분석 */}
+      {/* ① AI 홍보글 검토 */}
       <Card className="shadow-none">
         <CardHeader>
-          <CardTitle className="text-base">AI 규칙 분석</CardTitle>
+          <CardTitle className="text-base">AI 홍보글 검토</CardTitle>
           <CardDescription>
-            카페 공지를 붙여넣으면 Ai가 규칙을 자동 추출합니다.
-            저장 시 모든 사용자가 공유하는 공용 데이터가 업데이트됩니다.
+            작성한 홍보글을 붙여넣으면 카페 규정에 맞는지 AI가 검토해드립니다.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <p className="text-xs text-muted-foreground">
-            마지막 AI 분석:{' '}
-            <span className="font-medium text-foreground">
-              {new Date(cafe.updated_at).toLocaleDateString('ko-KR', {
-                year: 'numeric', month: 'long', day: 'numeric',
-              })}
-            </span>
-          </p>
-
           <textarea
             className="w-full min-h-[140px] rounded-md border bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground"
-            placeholder="카페 공지 내용을 여기에 붙여넣으세요..."
-            value={rulesText}
-            onChange={e => setRulesText(e.target.value)}
+            placeholder="작성한 홍보글을 여기에 붙여넣으세요..."
+            value={postText}
+            onChange={e => { setPostText(e.target.value); setReviewResult(null) }}
           />
-          <Button onClick={handleAnalyze} disabled={analyzing} variant="outline" className="w-full">
-            {analyzing
-              ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />분석 중...</>
-              : 'AI로 규칙 분석하기'}
+
+          <Button onClick={handleReview} disabled={reviewing} className="w-full">
+            {reviewing
+              ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />검토 중...</>
+              : '홍보글 검토하기'}
           </Button>
 
+          {reviewResult && (
+            <div className={`rounded-lg border p-4 space-y-3 ${
+              reviewResult.ok ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'
+            }`}>
+              <div className="flex items-center gap-2">
+                {reviewResult.ok
+                  ? <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
+                  : <XCircle className="h-5 w-5 text-red-500 shrink-0" />
+                }
+                <p className={`text-sm font-semibold ${reviewResult.ok ? 'text-green-700' : 'text-red-600'}`}>
+                  {reviewResult.summary}
+                </p>
+              </div>
+
+              {reviewResult.issues.length > 0 && (
+                <ul className="space-y-1 pl-1">
+                  {reviewResult.issues.map((issue, i) => (
+                    <li key={i} className="text-sm text-red-600 flex items-start gap-1.5">
+                      <span className="mt-0.5 shrink-0">•</span>
+                      <span>{issue}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {reviewResult.suggestion && (
+                <div className="rounded-md bg-white/70 border border-red-100 px-3 py-2">
+                  <p className="text-xs text-muted-foreground mb-0.5">수정 제안</p>
+                  <p className="text-sm text-foreground">{reviewResult.suggestion}</p>
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 

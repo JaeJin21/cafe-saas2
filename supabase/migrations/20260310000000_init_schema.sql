@@ -19,6 +19,7 @@ CREATE TABLE public.users (
   email         TEXT NOT NULL UNIQUE,
   nickname      TEXT,
   business_name TEXT,                        -- 가게 이름
+  business_type TEXT,                        -- 업종 (shopping, food, beauty, education, realestate, travel, it, other)
   phone         TEXT,
   plan          TEXT NOT NULL DEFAULT 'free' CHECK (plan IN ('free', 'pro', 'enterprise')),
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -212,8 +213,12 @@ CREATE POLICY "mission_log_update_own" ON public.mission_log
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.users (id, email)
-  VALUES (NEW.id, NEW.email);
+  INSERT INTO public.users (id, email, business_type)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    NEW.raw_user_meta_data->>'business_type'
+  );
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

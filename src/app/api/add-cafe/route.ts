@@ -94,6 +94,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ id: cafeId, name: alias })
   } catch (err: any) {
     console.error('add-cafe error:', err)
-    return NextResponse.json({ error: err.message || '카페 추가에 실패했습니다.' }, { status: 500 })
+    return NextResponse.json({ error: '카페 추가에 실패했습니다.' }, { status: 500 })
   }
 }
