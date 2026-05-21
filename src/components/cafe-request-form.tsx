@@ -7,9 +7,11 @@ import { Loader2, Plus, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useAuth } from '@/context/auth-context'
 
 export function AddCafeForm() {
   const router = useRouter()
+  const { requireAuth } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const [url, setUrl] = useState('')
   const [name, setName] = useState('')
@@ -17,6 +19,7 @@ export function AddCafeForm() {
   const [loading, setLoading] = useState(false)
 
   function openModal() {
+    if (!requireAuth()) return
     setUrl('')
     setName('')
     setNameError(false)

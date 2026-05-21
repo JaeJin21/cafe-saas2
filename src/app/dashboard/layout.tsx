@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { Sidebar } from '@/components/sidebar'
 import { Toaster } from '@/components/ui/sonner'
+import { AuthProvider } from '@/context/auth-context'
+import { FloatingLoginButton } from '@/components/floating-login-button'
 
 export default async function DashboardLayout({
   children,
@@ -22,12 +24,15 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen bg-muted/40">
-      <Sidebar cafes={cafes} />
-      <main className="flex-1 overflow-y-auto p-6">
-        {children}
-      </main>
-      <Toaster richColors position="top-right" />
-    </div>
+    <AuthProvider>
+      <div className="flex h-screen bg-muted/40">
+        <Sidebar cafes={cafes} />
+        <main className="flex-1 overflow-y-auto p-6">
+          {children}
+        </main>
+        <Toaster richColors position="top-right" />
+        <FloatingLoginButton />
+      </div>
+    </AuthProvider>
   )
 }

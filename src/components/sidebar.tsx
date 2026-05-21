@@ -8,6 +8,7 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
 import { createClient } from '@/lib/supabase/client'
+import { useAuth } from '@/context/auth-context'
 
 type CafeItem = {
   cafe_id: string
@@ -27,6 +28,7 @@ export function Sidebar({ cafes: initialCafes }: { cafes: CafeItem[] }) {
   const supabase = createClient()
   const sidebarRef = useRef<HTMLElement>(null)
 
+  const { user } = useAuth()
   const [cafes, setCafes] = useState(initialCafes)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -272,16 +274,18 @@ export function Sidebar({ cafes: initialCafes }: { cafes: CafeItem[] }) {
         </nav>
       </div>
 
-      <Separator className="mb-3" />
-
-      {/* 로그아웃 */}
-      <button
-        onClick={handleLogout}
-        className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-      >
-        <LogOut className="h-4 w-4" />
-        <span>로그아웃</span>
-      </button>
+      {user && (
+        <>
+          <Separator className="mb-3" />
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <LogOut className="h-4 w-4" />
+            <span>로그아웃</span>
+          </button>
+        </>
+      )}
     </aside>
   )
 }

@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Loader2, X, ExternalLink, RotateCcw, CheckCircle2, XCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { useAuth } from '@/context/auth-context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -58,6 +59,7 @@ export default function CafeDetailPage() {
   const params = useParams<{ id: string }>()
   const router = useRouter()
   const supabase = createClient()
+  const { requireAuth } = useAuth()
 
   const [cafe, setCafe] = useState<CafeMaster | null>(null)
   const [userMap, setUserMap] = useState<UserCafeMap | null>(null)
@@ -122,6 +124,7 @@ export default function CafeDetailPage() {
 
   // AI 홍보글 검토
   async function handleReview() {
+    if (!requireAuth()) return
     if (!postText.trim()) { toast.error('홍보글 내용을 입력해주세요.'); return }
     setReviewing(true)
     setReviewResult(null)
@@ -143,6 +146,7 @@ export default function CafeDetailPage() {
 
   // 개인 규칙 수정 → user_cafe_map.rules_override 저장
   async function handleSavePersonalRules() {
+    if (!requireAuth()) return
     if (!rules) return
     setSavingRules(true)
     try {
@@ -163,6 +167,7 @@ export default function CafeDetailPage() {
 
   // 개인 수정본 초기화 → AI 기본값 복원
   async function handleResetRules() {
+    if (!requireAuth()) return
     if (!cafe) return
     const { error } = await supabase
       .from('user_cafe_map')
@@ -176,6 +181,7 @@ export default function CafeDetailPage() {
 
   // 활동 지수 저장
   async function handleSaveActivity() {
+    if (!requireAuth()) return
     if (!activity) return
     setSavingActivity(true)
     try {

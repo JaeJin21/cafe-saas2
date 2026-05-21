@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Loader2, CheckCircle2, MinusCircle, ListTodo, Calendar } from 'lucide-react'
 import { notify } from '@/lib/notify'
 import { buildSchedule } from '@/lib/mission-scheduler'
+import { useAuth } from '@/context/auth-context'
 
 type MissionRow = {
   id: string
@@ -44,6 +45,7 @@ function sortMissions(list: MissionRow[]) {
 
 export default function MissionsPage() {
   const supabase = createClient()
+  const { requireAuth } = useAuth()
   const [todayMissions, setTodayMissions] = useState<MissionRow[]>([])
   const [upcomingMissions, setUpcomingMissions] = useState<MissionRow[]>([])
   const [hasSchedule, setHasSchedule] = useState(false)
@@ -102,6 +104,7 @@ export default function MissionsPage() {
   }, [todayMissions])
 
   async function generateSchedule() {
+    if (!requireAuth()) return
     setGenerating(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -155,6 +158,7 @@ export default function MissionsPage() {
   }
 
   async function updateStatus(id: string, status: 'done' | 'skipped', cafeId: string) {
+    if (!requireAuth()) return
     const { error } = await supabase
       .from('mission_log')
       .update({ status, done_at: status === 'done' ? new Date().toISOString() : null })

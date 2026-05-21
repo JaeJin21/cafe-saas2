@@ -30,18 +30,13 @@ export async function middleware(request: NextRequest) {
     if (!user) return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // 로그인 안 된 사용자가 대시보드 접근 시 로그인 페이지로
-  if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
-    return NextResponse.redirect(new URL('/login', request.url))
-  }
-
-  // 비로그인 유저가 / 접속 시 로그인 페이지로
-  if (!user && request.nextUrl.pathname === '/') {
-    return NextResponse.redirect(new URL('/login', request.url))
+  // / 접속 시 대시보드로 (로그인 여부 무관)
+  if (request.nextUrl.pathname === '/') {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   // 로그인된 사용자가 로그인/회원가입 페이지 접근 시 대시보드로
-  if (user && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup' || request.nextUrl.pathname === '/')) {
+  if (user && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup')) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
